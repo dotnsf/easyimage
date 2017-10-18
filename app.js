@@ -30,51 +30,21 @@ app.post( '/upload', function( req, res ){
       var img_height = file.height;
       var img_size = file.size;
 
-/*
       for( var x = 0; x < img_width; x += Math.ceil(img_width / 2) ){
-        for( var y = 0; y < img_height; x += Math.ceil(img_height / 2) ){
-          easyimg.crop({
-            src: filepath,
-            dst: filepath + "_" + x + "_" + y,
-            width: img_width,
-            height: img_height,
-            cropwidth: Math.ceil( img_width / 2 ),
-            cropheight: Math.ceil( img_height / 2 ),
-            x: x,
-            y: y
-          }).then(
-            function( image ){
-              console.log( JSON.stringify( image, 2, null ) );
-            },
-            function( error ){
-              console.log( error );
-            }
+        for( var y = 0; y < img_height; y += Math.ceil(img_height / 2) ){
+          cropImage( filepath, filepath + "_" + x + "_" + y, Math.ceil( img_width / 2 ), Math.ceil( img_height / 2 ), x, y ).then( 
+           function( image ){
+             console.log( JSON.stringify( image, 2, null ) );
+             fs.unlink( filepath, function(e){} );
+             //fs.unlink( filepath + "_" + x + "_" + y, function(e){} );
+           },
+           function( error ){
+             console.log( error );
+             fs.unlink( filepath, function(e){} );
+           }
           );
         }
       }
-*/
-          easyimg.crop({
-            src: filepath,
-            dst: filepath + "_0_0",
-//            width: img_width,
-//            height: img_height,
-            cropwidth: Math.ceil( img_width / 2 ),
-            cropheight: Math.ceil( img_height / 2 ),
-            x: 0,
-            y: 0
-          }).then(
-            function( image ){
-              console.log( 'success' );
-              console.log( JSON.stringify( image, 2, null ) );
-              fs.unlink( filepath, function(e){} );
-              fs.unlink( filepath + "_0_0", function(e){} );
-            },
-            function( error ){
-              console.log( 'error' );
-              console.log( error );
-              fs.unlink( filepath, function(e){} );
-            }
-          );
 
       res.write( JSON.stringify( {status:true, file: file }, 2, null ) );
       res.end();
@@ -85,6 +55,26 @@ app.post( '/upload', function( req, res ){
     }
   );
 });
+
+function cropImage( src, dst, cropwidth, cropheight, x, y ){
+  return new Promise( function( resolve, reject ){
+    easyimg.crop({
+      src: src,
+      dst: dst,
+      cropwidth: cropwidth,
+      cropheight: cropheight,
+      x: x,
+      y: y
+    }).then(
+      function( image ){
+        resolve( image );
+      },
+      function( error ){
+        reject( error );
+      }
+    );
+  });
+}
 
 var port = appEnv.port || 3000;
 app.listen( port );
